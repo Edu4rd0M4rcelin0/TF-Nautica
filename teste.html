@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TF Náutica</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .produto-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: nowrap;
+        }
+        .produto-item input {
+            flex: 1;
+            min-width: 100px;
+        }
+        .remove-btn {
+            background: #dc3545;
+            border: none;
+            padding: 4px 6px;
+            font-size: 10px;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: auto;
+            width: 60px;
+        }
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        .btn-add {
+            background: #28a745;
+        }
+        .btn-add:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>TF Náutica</h2>
+        <form id="formOrcamento" onsubmit="event.preventDefault();">
+            <label>Nome:</label>
+            <input type="text" id="cliente" required>
+
+            <label>Email:</label>
+            <input type="email" id="email" required>
+
+            <label>Telefone:</label>
+            <input type="tel" id="telefone" required>
+
+            <label>Nome da Embarcação:</label>
+            <input type="text" id="embarcacao" required>
+
+            <h3>Produtos</h3>
+            <div id="produtos"></div>
+            <button type="button" class="btn-add" onclick="adicionarProduto()">Adicionar Produto</button>
+
+            <button type="button" onclick="gerarPDF()">Gerar PDF</button>
+        </form>
+    </div>
+
+    <script>
+        function adicionarProduto() {
+            let div = document.createElement("div");
+            div.classList.add("produto-item");
+            div.innerHTML = `
+                <input type="text" placeholder="Produto" class="produto" required>
+                <input type="number" placeholder="Qtd" class="quantidade" required>
+                <input type="number" placeholder="Preço" class="preco" step="0.01" required>
+                <button type="button" class="remove-btn" onclick="removerProduto(this)">Remover</button>
+            `;
+            document.getElementById("produtos").appendChild(div);
+        }
+
+        function removerProduto(botao) {
+            botao.parentNode.remove();
+        }
+
+        function gerarNumeroOS() {
+            const now = new Date();
+            return 'OS' + now.getFullYear().toString().slice(-2) + (now.getMonth()+1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + '-' + Math.floor(Math.random() * 10000);
+        }
+
+        function gerarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const margem = 20;
+            let y = 20;
+
+            const numeroOS = gerarNumeroOS();
+            const hoje = new Date();
+            const dataFormatada = hoje.toLocaleDateString('pt-BR');
+
+            doc.setFillColor(33, 150, 243);
+            doc.rect(0, 0, 210, 25, 'F');
+            doc.setTextColor(255);
+            doc.setFontSize(20);
+            doc.text("TF Náutica - Orçamento", margem, y);
+            doc.setFontSize(12);
+            doc.text(`Nº ${numeroOS}`, 150, y);
+            y += 8;
+            doc.text(`Data: ${dataFormatada}`, 150, y);
+
+            doc.setTextColor(0);
+            y = 35;
+            doc.setFontSize(14);
+            doc.text("Dados do Cliente", margem, y);
+            y += 8;
+
+            const cliente = document.getElementById("cliente").value;
+            const email = document.getElementById("email").value;
+            const telefone = document.getElementById("telefone").value;
+            const embarcacao = document.getElementById("embarcacao").value;
+
+            doc.setFontSize(12);
+            doc.text(`Nome: ${cliente}`, margem, y); y += 6;
+            doc.text(`Email: ${email}`, margem, y); y += 6;
+            doc.text(`Telefone: ${telefone}`, margem, y); y += 6;
+            doc.text(`Embarcação: ${embarcacao}`, margem, y); y += 10;
+
+            doc.setFontSize(14);
+            doc.text("Produtos", margem, y); y += 8;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margem - 2, y - 5, 175, 8, 'F');
+            doc.text("Produto", margem, y);
+            doc.text("Qtd", margem + 60, y);
+            doc.text("Preço (R$)", margem + 90, y);
+            doc.text("Subtotal (R$)", margem + 130, y);
+            doc.setFont(undefined, 'normal');
+            y += 8;
+
+            const produtos = document.querySelectorAll(".produto");
+            const quantidades = document.querySelectorAll(".quantidade");
+            const precos = document.querySelectorAll(".preco");
+
+            let total = 0;
+
+            for (let i = 0; i < produtos.length; i++) {
+                const qtd = parseFloat(quantidades[i].value) || 0;
+                const preco = parseFloat(precos[i].value) || 0;
+                const subtotal = qtd * preco;
+                total += subtotal;
+
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                doc.text(produtos[i].value, margem, y);
+                doc.text(qtd.toString(), margem + 60, y);
+                doc.text(`R$ ${preco.toFixed(2)}`, margem + 90, y);
+                doc.text(`R$ ${subtotal.toFixed(2)}`, margem + 130, y);
+                y += 8;
+            }
+
+            y += 5;
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(13);
+            doc.text(`Total Geral: R$ ${total.toFixed(2)}`, margem + 130, y);
+
+            doc.setDrawColor(200);
+            doc.line(margem, y + 5, 195, y + 5);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text("Orçamento gerado por TF Náutica", margem, y + 12);
+
+            doc.save(`${numeroOS}.pdf`);
+        }
+    </script>
+</body>
+</html>
